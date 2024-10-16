@@ -1,6 +1,8 @@
+package PrimitiveAndObjectDatatype;
+
 //TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
 // click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
-public class Main {
+public class PrimitiveObjectDataType {
     public static void main(String[] args) {
         //  Primitive data types trong Java là gì?
         //  - Là các kiểu dữ liệu đơn giản, không phải là đối tượng, và lưu trữ giá trị trực tiếp
