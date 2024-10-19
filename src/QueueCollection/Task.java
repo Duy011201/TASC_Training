@@ -1,4 +1,4 @@
-package Queue;
+package QueueCollection;
 
 public class Task {
 	String name;
