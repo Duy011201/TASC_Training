@@ -1,12 +1,14 @@
 package Assignment;
 
+import Assignment.exception.HandleServiceException;
+import Assignment.service.CustomerServiceImpl;
 import Assignment.service.CustomerService;
 
 import java.util.Scanner;
 
 public class Main {
-	public static void main(String[] args) {
-		CustomerService customerService = new CustomerService();
+	public static void main(String[] args) throws HandleServiceException {
+		CustomerService customerService = new CustomerServiceImpl();
 		customerService.loadFileCustomer();
 
 		Scanner scanner = new Scanner(System.in);

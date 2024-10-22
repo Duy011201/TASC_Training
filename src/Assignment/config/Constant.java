@@ -1,7 +1,7 @@
 package Assignment.config;
 
 public interface Constant {
-	static final String FILE_PATH = "D:/assignment/src/data-customer.txt";
+	static final String FILE_PATH = "D:/assignment/src/data-customer1.txt";
 	static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 	static final String PHONE_REGEX = "^\\d+$";
 	static final byte PHONE_LENGTH = 10;
@@ -17,6 +17,9 @@ public interface Constant {
 	static final String FILE_EMPTY = "File trống";
 	static final String LIST_EMPTY = "Danh sách trống";
 
+	static final String ADD_ERROR = "Thêm thất bại";
+	static final String UPDATE_ERROR = "Cập nhật thất bại";
+	static final String DELETE_ERROR = "Xóa thất bại";
 	static final String SAVE_FILE_ERROR = "Lưu file thất bại";
 	static final String LOAD_FILE_ERROR = "Tải file thất bại";
 

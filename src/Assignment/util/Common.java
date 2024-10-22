@@ -6,9 +6,6 @@ import Assignment.config.Constant;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static Assignment.config.Constant.PHONE_LENGTH;
-import static Assignment.config.Constant.PHONE_REGEX;
-
 public class Common implements Constant {
 	public static boolean isValidPhoneNumber(String phoneNumber) {
 		if(isNullOrEmpty(phoneNumber) || phoneNumber.length() != PHONE_LENGTH || !phoneNumber.matches(PHONE_REGEX)) {
