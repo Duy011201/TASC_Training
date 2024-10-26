@@ -6,10 +6,12 @@ import Assignment.exception.HandleServiceException;
 import Assignment.util.Common;
 
 import java.io.*;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Scanner;
-import java.util.Set;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class CustomerServiceImpl extends Common implements Constant, CustomerService {
 	private Set<Customer> listCustomer = new HashSet<>();
@@ -23,11 +25,17 @@ public class CustomerServiceImpl extends Common implements Constant, CustomerSer
 			throw new HandleServiceException(FILE_NOT_FOUND);
 		}
 
-		try (PrintWriter writer = new PrintWriter(new FileWriter(FILE_PATH))) {
-			writer.println("Name,Email,Phone");
+		try (Writer writer = new FileWriter(file)) {
+			writer.write("[\n");
+			int count = 0;
 			for (Customer customer : listCustomer) {
-				writer.println(customer.getName() + "," + customer.getEmail() + "," + customer.getPhoneNumber());
+				writer.write("  {\n");
+				writer.write("    \"name\": \"" + customer.getName() + "\",\n");
+				writer.write("    \"email\": \"" + customer.getEmail() + "\",\n");
+				writer.write("    \"phoneNumber\": \"" + customer.getPhoneNumber() + "\"\n");
+				writer.write("  }" + (++count < listCustomer.size() ? ",\n" : "\n"));
 			}
+			writer.write("]");
 			System.out.println(SAVE_FILE_SUCCESS);
 		} catch (IOException e) {
 			throw new HandleServiceException(SAVE_FILE_ERROR, e);
@@ -181,7 +189,7 @@ public class CustomerServiceImpl extends Common implements Constant, CustomerSer
 		System.out.println(NOT_FOUND_CUSTOMER);
 	}
 
-	public void loadFileCustomer() throws HandleServiceException {
+	public void loadFileCustomerSingle() throws HandleServiceException {
 		File file = new File(FILE_PATH);
 
 		if (!file.exists()) {
@@ -192,16 +200,146 @@ public class CustomerServiceImpl extends Common implements Constant, CustomerSer
 			throw new HandleServiceException(FILE_EMPTY);
 		}
 
-		try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
-			String line = reader.readLine();
-			while ((line = reader.readLine()) != null) {
-				String[] data = line.split(",");
-				Customer customer = new Customer(data[0], data[1], data[2]);
-				listCustomer.add(customer);
+		long startTimeMillis = System.currentTimeMillis();
+		try {
+			// Đọc toàn bộ nội dung file một lần thay vì đọc từng dòng
+			String jsonString = new String(Files.readAllBytes(Paths.get(FILE_PATH))).trim();
+
+			// Loại bỏ dấu ngoặc đầu cuối nếu cần
+			if (jsonString.startsWith("[") && jsonString.endsWith("]")) {
+				jsonString = jsonString.substring(1, jsonString.length() - 1);
 			}
+
+			// Chia JSON thành các phần tử của khách hàng
+			String[] customers = jsonString.split("\\},\\{");
+
+			// Dùng Stream API để chuyển đổi thành danh sách các Customer
+			listCustomer.clear();
+			listCustomer.addAll(Arrays.stream(customers).map(customerStr -> {
+				// Đảm bảo loại bỏ ký tự không cần thiết một lần
+				customerStr = customerStr.replaceAll("[{}\"]", "");
+
+				String name = "", email = "", phone = "";
+
+				// Xử lý từng thuộc tính của Customer
+				String[] fields = customerStr.split(",");
+				for (String field : fields) {
+					String[] keyValue = field.split(":");
+					if (keyValue.length == 2) {
+						String key = keyValue[0].trim();
+						String value = keyValue[1].trim();
+						switch (key) {
+							case "name":
+								name = value;
+								break;
+							case "email":
+								email = value;
+								break;
+							case "phoneNumber":
+								phone = value;
+								break;
+						}
+					}
+				}
+				return new Customer(name, email, phone);
+			}).toList());
+
+			long endTimeMillis = System.currentTimeMillis();
+			System.out.println("Thời gian chạy (ms): " + (endTimeMillis - startTimeMillis) + " ms");
+
 		} catch (IOException e) {
 			throw new HandleServiceException(LOAD_FILE_ERROR, e);
 		}
+	}
+
+	public void loadFileCustomerMulti() throws HandleServiceException {
+		File file = new File(FILE_PATH);
+
+		// Kiểm tra tệp có tồn tại và không rỗng
+		if (!file.exists()) {
+			throw new HandleServiceException(FILE_NOT_FOUND);
+		}
+
+		if (file.length() == 0) {
+			throw new HandleServiceException(FILE_EMPTY);
+		}
+
+		long startTimeMillis = System.currentTimeMillis();
+
+		List<Customer> customers;
+
+		try {
+			// Đọc toàn bộ nội dung tệp
+			String jsonString = new String(Files.readAllBytes(Paths.get(FILE_PATH))).trim();
+
+			// Xử lý chuỗi JSON chỉ một lần
+			if (jsonString.startsWith("[") && jsonString.endsWith("]")) {
+				jsonString = jsonString.substring(1, jsonString.length() - 1);
+			}
+
+			// Chia JSON thành các phần tử của khách hàng
+			String[] customerArray = jsonString.split("\\},\\{");
+
+			// Khởi tạo danh sách khách hàng
+			listCustomer.clear();
+
+			// Sử dụng CompletableFuture để xử lý đồng thời
+			List<CompletableFuture<Customer>> futures = new ArrayList<>();
+
+			for (String customerStr : customerArray) {
+				// Chuyển đổi customerStr để loại bỏ các ký tự không cần thiết trước khi xử lý
+				futures.add(CompletableFuture.supplyAsync(() -> processCustomer(customerStr.replaceAll("[{}\"]", "").trim())));
+			}
+
+			// Thu thập kết quả từ các tác vụ, xử lý các ngoại lệ
+			customers = futures.stream()
+							.map(future -> {
+								try {
+									return future.join();
+								} catch (Exception e) {
+									// Xử lý lỗi nếu cần thiết
+									System.err.println("Error processing customer: " + e.getMessage());
+									return null;
+								}
+							})
+							.filter(Objects::nonNull) // Loại bỏ giá trị null do lỗi
+							.collect(Collectors.toList());
+
+			listCustomer.addAll(customers);
+
+			long endTimeMillis = System.currentTimeMillis();
+			System.out.println("Thời gian chạy (ms): " + (endTimeMillis - startTimeMillis) + " ms");
+
+		} catch (IOException e) {
+			throw new HandleServiceException(LOAD_FILE_ERROR, e);
+		}
+	}
+
+	private Customer processCustomer(String customerStr) {
+		String[] fields = customerStr.split(",");
+
+		String name = null, email = null, phone = null;
+
+		// Phân tích các trường khách hàng
+		for (String field : fields) {
+			String[] keyValue = field.split(":");
+			if (keyValue.length == 2) {
+				String key = keyValue[0].trim();
+				String value = keyValue[1].trim();
+				switch (key) {
+					case "name":
+						name = value;
+						break;
+					case "email":
+						email = value;
+						break;
+					case "phoneNumber":
+						phone = value;
+						break;
+				}
+			}
+		}
+		return new Customer(name, email, phone);
 	}
 
 	public void displayCustomer() {
@@ -216,3 +354,5 @@ public class CustomerServiceImpl extends Common implements Constant, CustomerSer
 		}
 	}
 }
+
+

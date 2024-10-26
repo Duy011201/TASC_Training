@@ -1,10 +1,11 @@
 package Assignment.config;
 
 public interface Constant {
-	static final String FILE_PATH = "D:/assignment/src/data-customer1.txt";
+	static final String FILE_PATH = "D:/tasc_traning/demo/src/Assignment/data.json";
 	static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 	static final String PHONE_REGEX = "^\\d+$";
 	static final byte PHONE_LENGTH = 10;
+	static final byte THREAD_COUNT = 10;
 
 	static final String SAVE_FILE_SUCCESS = "Lưu file thành công";
 	static final String LOAD_FILE_SUCCESS = "Tải file thành công";

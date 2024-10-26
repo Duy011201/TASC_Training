@@ -9,7 +9,8 @@ import java.util.Scanner;
 public class Main {
 	public static void main(String[] args) throws HandleServiceException {
 		CustomerService customerService = new CustomerServiceImpl();
-		customerService.loadFileCustomer();
+		customerService.loadFileCustomerSingle();
+		customerService.loadFileCustomerMulti();
 
 		Scanner scanner = new Scanner(System.in);
 		byte choice;

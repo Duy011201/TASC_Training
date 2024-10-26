@@ -1,5 +1,0 @@
-Name,Email,Phone
-Duy,duy@gmail.com,123456789
-vu,vu@gmail.com,0000000001
-demo,demo@gmail.com,0000000002
-asd,asd@gmail.com,1234512345

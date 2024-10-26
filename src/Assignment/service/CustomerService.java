@@ -8,6 +8,7 @@ public interface CustomerService {
 	public void updateCustomer() throws HandleServiceException;
 	public void deleteCustomer() throws HandleServiceException;
 	public void displayCustomer() throws HandleServiceException;
-	public void loadFileCustomer() throws HandleServiceException;
+	public void loadFileCustomerSingle() throws HandleServiceException;
+	public void loadFileCustomerMulti() throws HandleServiceException;
 	public void searchCustomerByPhoneNumber() throws HandleServiceException;
 }
